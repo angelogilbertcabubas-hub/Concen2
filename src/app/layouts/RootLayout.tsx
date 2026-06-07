@@ -57,8 +57,8 @@ function MobileBottomNav() {
             onClick={() => navigate(item.path)}
             className={`flex flex-col items-center gap-1 px-3 py-2 transition-colors ${
               location.pathname === item.path
-                ? 'text-primary'
-                : 'text-muted-foreground'
+                ? 'text-[#1B3045] dark:text-primary'
+                : 'text-[#1B3045] dark:text-muted-foreground'
             }`}
           >
             <span className="text-xl">{item.icon}</span>

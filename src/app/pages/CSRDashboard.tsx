@@ -11,7 +11,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '../components/ui/dialog';
-import { BookOpen, ChevronDown, ChevronUp, FileText, CheckCircle, AlertTriangle, Clock, MessageSquare } from 'lucide-react';
+import { BookOpen, ChevronDown, ChevronUp, FileText, CheckCircle, AlertTriangle, Clock, MessageSquare, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 
@@ -243,7 +243,7 @@ export default function CSRDashboard() {
                       <div className="flex items-start justify-between w-full">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-mono font-bold text-primary group-hover:underline">{ticket.id}</span>
+                            <span className="text-xs font-mono font-bold text-[#C78500] dark:text-primary group-hover:underline">{ticket.id}</span>
                             <Badge variant="outline" className={`text-[10px] px-2 py-0 ${getPriorityColor(ticket.priority)}`}>
                               {ticket.priority} Priority
                             </Badge>
@@ -372,13 +372,23 @@ export default function CSRDashboard() {
 
       {/* Ticket Management Modal */}
       <Dialog open={!!selectedTicket} onOpenChange={(open) => !open && setSelectedTicket(null)}>
-        <DialogContent className="sm:max-w-[450px]">
+        <DialogContent className="sm:max-w-[450px] [&>button.absolute]:hidden">
           {selectedTicket && (
             <>
               <DialogHeader>
                 <div className="flex items-center justify-between mb-2">
-                  <Badge variant="outline" className="font-mono text-primary bg-primary/5">{selectedTicket.id}</Badge>
-                  {getStatusBadge(selectedTicket.status)}
+                  <Badge variant="outline" className="font-mono text-[#C78500] dark:text-primary bg-primary/5">{selectedTicket.id}</Badge>
+                  <div className="flex items-center gap-3">
+                    {getStatusBadge(selectedTicket.status)}
+                    <button
+                      type="button"
+                      aria-label="Close"
+                      onClick={() => setSelectedTicket(null)}
+                      className="opacity-70 hover:opacity-100 transition-opacity"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
                 <DialogTitle className="text-xl font-bold">{selectedTicket.title}</DialogTitle>
                 <DialogDescription>
@@ -445,7 +455,7 @@ export default function CSRDashboard() {
               </div>
 
               <DialogFooter>
-                <Button variant="ghost" onClick={() => setSelectedTicket(null)}>Close</Button>
+                <Button variant="outline" onClick={() => setSelectedTicket(null)} className="px-4 py-2 border border-gray-300 rounded-lg">Close</Button>
               </DialogFooter>
             </>
           )}

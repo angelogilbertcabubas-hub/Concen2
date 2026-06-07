@@ -264,7 +264,7 @@ export default function Login() {
       <Dialog open={showContactHR} onOpenChange={setShowContactHR}>
         <DialogContent className="sm:max-w-[450px]">
           <DialogHeader>
-            <DialogTitle style={{ color: '#fac06d' }}>Contact HR Team</DialogTitle>
+            <DialogTitle className="text-[#fac06d]">Contact HR Team</DialogTitle>
             <DialogDescription>Have questions or problems logging in?</DialogDescription>
           </DialogHeader>
           <form onSubmit={handleContactSubmit}>

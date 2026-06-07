@@ -44,7 +44,6 @@ type Agent = {
   quality: number;
 };
 
-// Custom Tooltip for the Sparkline Charts to match your images
 const SparklineTooltip = ({ active, payload, label, chartColor, title }: any) => {
   if (active && payload && payload.length) {
     return (
@@ -63,36 +62,43 @@ export default function HRDashboard() {
   const { user } = useRole();
   const [error, setError] = useState(false);
   
-  // Track requests inside component state
   const [leaveRequests, setLeaveRequests] = useState(mockLeaveRequests);
   const [scheduleRequests, setScheduleRequests] = useState(mockScheduleRequests);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
-  // Rejection modal states
   const [rejectingItem, setRejectingItem] = useState<{
     id: string;
     name: string;
     type: 'leave' | 'schedule';
+    details?: string;
+    amount?: string;
+  } | null>(null);
+  const [approvingItem, setApprovingItem] = useState<{
+    id: string;
+    name: string;
+    type: 'leave' | 'schedule';
+    details?: string;
+    amount?: string;
   } | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [approvalRemarks, setApprovalRemarks] = useState('');
 
-  // Interactive Overlay States
   const [activeMessageAgent, setActiveMessageAgent] = useState<Agent | null>(null);
   const [chatText, setChatText] = useState('');
   const [isSendingChat, setIsSendingChat] = useState(false);
   const [activeProfileAgent, setActiveProfileAgent] = useState<Agent | null>(null);
 
-  // HR-Specific KPIs with Sparkline Data
   const kpis = [
     {
       title: 'Active Headcount',
       value: '1,245',
       trendText: '+12 hires this month',
-      isPositiveTrend: true, // More headcount = positive growth
+      trendDirection: 'up',
+      trendSentiment: 'positive',
       icon: Users,
       color: 'text-blue-500',
       bgColor: 'bg-blue-500/10',
-      chartColor: '#3b82f6', // Tailwind blue-500
+      chartColor: '#3b82f6',
       data: [
         { name: 'Week 1', val: 1233 }, { name: 'Week 2', val: 1235 }, 
         { name: 'Week 3', val: 1238 }, { name: 'Week 4', val: 1245 }
@@ -102,11 +108,12 @@ export default function HRDashboard() {
       title: 'Absenteeism Rate',
       value: '2.4%',
       trendText: '-0.5% vs last week',
-      isPositiveTrend: true, // Lower absenteeism = good (green)
+      trendDirection: 'down',
+      trendSentiment: 'positive',
       icon: TrendingDown,
       color: 'text-green-500',
       bgColor: 'bg-green-500/10',
-      chartColor: '#22c55e', // Tailwind green-500
+      chartColor: '#22c55e',
       data: [
         { name: 'Mon', val: 3.2 }, { name: 'Tue', val: 3.5 }, 
         { name: 'Wed', val: 2.9 }, { name: 'Thu', val: 2.6 }, { name: 'Fri', val: 2.4 }
@@ -116,11 +123,12 @@ export default function HRDashboard() {
       title: 'Open Requisitions',
       value: '18',
       trendText: '-4 filled this week',
-      isPositiveTrend: true, // Fewer open reqs = hiring is happening (green)
+      trendDirection: 'down',
+      trendSentiment: 'positive',
       icon: Briefcase,
       color: 'text-amber-500',
       bgColor: 'bg-amber-500/10',
-      chartColor: '#f59e0b', // Tailwind amber-500
+      chartColor: '#f59e0b',
       data: [
         { name: 'Mon', val: 22 }, { name: 'Tue', val: 21 }, 
         { name: 'Wed', val: 20 }, { name: 'Thu', val: 18 }, { name: 'Fri', val: 18 }
@@ -130,11 +138,12 @@ export default function HRDashboard() {
       title: 'Avg. eNPS Score',
       value: '+42',
       trendText: '+2 points this quarter',
-      isPositiveTrend: true, // Higher eNPS = better morale
+      trendDirection: 'up',
+      trendSentiment: 'positive',
       icon: HeartPulse,
       color: 'text-purple-500',
       bgColor: 'bg-purple-500/10',
-      chartColor: '#a855f7', // Tailwind purple-500
+      chartColor: '#a855f7',
       data: [
         { name: 'Jan', val: 38 }, { name: 'Feb', val: 39 }, 
         { name: 'Mar', val: 40 }, { name: 'Apr', val: 42 }
@@ -175,15 +184,47 @@ export default function HRDashboard() {
     
     if (type === 'leave') {
       setLeaveRequests(prev => prev.filter(req => req.id !== id));
-      toast.error('Leave Request Rejected', { description: `Rejected leave request for ${name}.` });
+      toast.error('Leave Request Rejected', { 
+        description: `Rejected leave request for ${name}.`,
+        className: 'bg-rose-500 text-white border-none',
+      });
     } else {
       setScheduleRequests(prev => prev.filter(req => req.id !== id));
-      toast.error('Schedule Change Rejected', { description: `Rejected schedule swap for ${name}.` });
+      toast.error('Schedule Change Rejected', { 
+        description: `Rejected schedule swap for ${name}.`,
+        className: 'bg-rose-500 text-white border-none',
+      });
     }
 
     setActionLoadingId(null);
     setRejectingItem(null);
     setRejectionReason('');
+  };
+
+  const handleConfirmApprove = async () => {
+    if (!approvingItem) return;
+    const { id, name, type } = approvingItem;
+
+    setActionLoadingId(id);
+    await new Promise(resolve => setTimeout(resolve, 600));
+    
+    if (type === 'leave') {
+      setLeaveRequests(prev => prev.filter(req => req.id !== id));
+      toast.success('Leave Request Approved', { 
+        description: `Approved leave request for ${name}.`,
+        className: 'bg-emerald-500 text-white border-none',
+      });
+    } else {
+      setScheduleRequests(prev => prev.filter(req => req.id !== id));
+      toast.success('Schedule Change Approved', { 
+        description: `Approved schedule swap for ${name}.`,
+        className: 'bg-emerald-500 text-white border-none',
+      });
+    }
+
+    setActionLoadingId(null);
+    setApprovingItem(null);
+    setApprovalRemarks('');
   };
 
   const handleSendMessage = async () => {
@@ -238,8 +279,8 @@ export default function HRDashboard() {
                     <div>
                       <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{kpi.title}</p>
                       <p className="text-3xl font-bold mt-2 text-foreground tracking-tight">{kpi.value}</p>
-                      <p className={`text-xs font-semibold mt-1.5 flex items-center gap-1 ${kpi.isPositiveTrend ? 'text-green-500 dark:text-green-400' : 'text-rose-500 dark:text-rose-400'}`}>
-                        {kpi.isPositiveTrend ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
+                      <p className={`text-xs font-semibold mt-1.5 flex items-center gap-1 ${kpi.trendSentiment === 'positive' ? 'text-green-500 dark:text-green-400' : 'text-rose-500 dark:text-rose-400'}`}>
+                        {kpi.trendDirection === 'up' ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
                         {kpi.trendText}
                       </p>
                     </div>
@@ -362,8 +403,8 @@ export default function HRDashboard() {
                             <div className="flex gap-2">
                               <Button
                                 size="sm"
-                                className="flex-1 bg-green-500 hover:bg-green-600 text-white"
-                                onClick={() => handleApprove(request.id, request.name, 'leave')}
+                                className="flex-1 bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white border-none"
+                                onClick={() => setApprovingItem({ id: request.id, name: request.name, type: 'leave', details: `${request.type} - ${request.dates}` })}
                                 disabled={actionLoadingId === request.id}
                               >
                                 <Check className="w-4 h-4 mr-1" />
@@ -372,7 +413,7 @@ export default function HRDashboard() {
                               <Button
                                 size="sm"
                                 className="flex-1 bg-rose-500 hover:bg-rose-600 dark:bg-rose-600 dark:hover:bg-rose-500 text-white border-none"
-                                onClick={() => setRejectingItem({ id: request.id, name: request.name, type: 'leave' })}
+                                onClick={() => setRejectingItem({ id: request.id, name: request.name, type: 'leave', details: `${request.type} - ${request.dates}` })}
                                 disabled={actionLoadingId === request.id}
                               >
                                 <X className="w-4 h-4 mr-1" />
@@ -412,8 +453,8 @@ export default function HRDashboard() {
                           <div className="flex gap-2">
                             <Button
                               size="sm"
-                              className="flex-1 bg-green-500 hover:bg-green-600 text-white"
-                              onClick={() => handleApprove(request.id, request.name, 'schedule')}
+                              className="flex-1 bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white border-none"
+                              onClick={() => setApprovingItem({ id: request.id, name: request.name, type: 'schedule', details: `${request.request} - ${request.date}` })}
                               disabled={actionLoadingId === request.id}
                             >
                               <Check className="w-4 h-4 mr-1" />
@@ -422,7 +463,7 @@ export default function HRDashboard() {
                             <Button
                               size="sm"
                               className="flex-1 bg-rose-500 hover:bg-rose-600 dark:bg-rose-600 dark:hover:bg-rose-500 text-white border-none"
-                              onClick={() => setRejectingItem({ id: request.id, name: request.name, type: 'schedule' })}
+                              onClick={() => setRejectingItem({ id: request.id, name: request.name, type: 'schedule', details: `${request.request} - ${request.date}` })}
                               disabled={actionLoadingId === request.id}
                             >
                               <X className="w-4 h-4 mr-1" />
@@ -496,40 +537,102 @@ export default function HRDashboard() {
         </Card>
       </div>
 
-      {/* Mandatory Request Rejection Reason Modal Overlay */}
+      {/* Action Modals */}
       <Dialog open={!!rejectingItem} onOpenChange={(open) => !open && setRejectingItem(null)}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[425px] bg-card p-6 border border-border">
           <DialogHeader>
-            <DialogTitle className="text-destructive font-bold">Reject Request</DialogTitle>
-            <DialogDescription>
-              Please provide a valid reason for rejecting the request submitted by{' '}
-              <span className="font-semibold text-foreground">{rejectingItem?.name}</span>.
+            <DialogTitle className="text-xl font-bold text-rose-600 dark:text-rose-400">Reject Request</DialogTitle>
+            <DialogDescription className="text-sm text-foreground pt-2">
+              Please provide a valid reason for rejecting the {rejectingItem?.type} request submitted by{' '}
+              <span className="font-semibold">{rejectingItem?.name}</span>.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
+          <div className="space-y-4 py-2">
+            <div className="p-3 bg-muted/40 rounded-lg border border-border space-y-1">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Request Summary</p>
+              <p className="text-sm font-medium text-foreground">{rejectingItem?.id}</p>
+              <p className="text-xs text-muted-foreground">{rejectingItem?.details}</p>
+            </div>
             <div className="grid gap-2">
               <label htmlFor="reason" className="text-sm font-semibold">
-                Reason for Rejection <span className="text-destructive">*</span>
+                Reason for Rejection <span className="text-rose-500">*</span>
               </label>
               <textarea
                 id="reason"
-                placeholder="Type the reason why this request is being denied..."
+                className="flex min-h-[100px] w-full rounded-md border border-input bg-muted/50 px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
+                placeholder="Required. Provide justification for the rejection..."
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
-                className="min-h-[120px] flex w-full rounded-md bg-muted border-none px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                required
               />
             </div>
+            <div className="grid gap-2">
+              <span className="text-sm font-semibold">Attachments (Optional)</span>
+              <label htmlFor="file-upload-reject-hr" className="border-2 border-dashed border-border rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-muted/50 transition-colors">
+                <input id="file-upload-reject-hr" type="file" className="hidden" multiple accept=".pdf,.jpg,.jpeg,.png" />
+                <p className="text-xs text-muted-foreground mb-1">Click to upload or drag and drop</p>
+                <p className="text-[10px] text-muted-foreground/70">PDF, JPG, PNG up to 5MB</p>
+              </label>
+            </div>
           </div>
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="gap-2 sm:gap-0 mt-4">
             <Button variant="outline" onClick={() => { setRejectingItem(null); setRejectionReason(''); }}>Cancel</Button>
             <Button
               type="button"
               onClick={handleConfirmReject}
               disabled={!rejectionReason.trim() || actionLoadingId === rejectingItem?.id}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-rose-500 hover:bg-rose-600 text-white"
             >
               Confirm Rejection
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!approvingItem} onOpenChange={(open) => !open && setApprovingItem(null)}>
+        <DialogContent className="sm:max-w-[425px] bg-card p-6 border border-border">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-emerald-600 dark:text-emerald-400">Confirm Approval</DialogTitle>
+            <DialogDescription className="text-sm text-foreground pt-2">
+              Review the details before approving the {approvingItem?.type} request submitted by{' '}
+              <span className="font-semibold">{approvingItem?.name}</span>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="p-3 bg-muted/40 rounded-lg border border-border space-y-1">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Request Summary</p>
+              <p className="text-sm font-medium text-foreground">{approvingItem?.id}</p>
+              <p className="text-xs text-muted-foreground">{approvingItem?.details}</p>
+            </div>
+            <div className="grid gap-2">
+              <label htmlFor="remarks" className="text-sm font-semibold">
+                Remarks (Optional)
+              </label>
+              <textarea
+                id="remarks"
+                className="flex min-h-[80px] w-full rounded-md border border-input bg-muted/50 px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
+                placeholder="Add any notes for the requester..."
+                value={approvalRemarks}
+                onChange={(e) => setApprovalRemarks(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <span className="text-sm font-semibold">Attachments (Optional)</span>
+              <label htmlFor="file-upload-approve-hr" className="border-2 border-dashed border-border rounded-lg p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-muted/50 transition-colors">
+                <input id="file-upload-approve-hr" type="file" className="hidden" multiple accept=".pdf,.jpg,.jpeg,.png" />
+                <p className="text-xs text-muted-foreground mb-1">Click to upload or drag and drop</p>
+                <p className="text-[10px] text-muted-foreground/70">PDF, JPG, PNG up to 5MB</p>
+              </label>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0 mt-4">
+            <Button variant="outline" onClick={() => { setApprovingItem(null); setApprovalRemarks(''); }}>Cancel</Button>
+            <Button
+              type="button"
+              onClick={handleConfirmApprove}
+              disabled={actionLoadingId === approvingItem?.id}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              Confirm Approval
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -573,11 +676,11 @@ export default function HRDashboard() {
 
       {/* RESTORED: Comprehensive Agent Profile Overlay Sheet */}
       <Dialog open={!!activeProfileAgent} onOpenChange={(open) => !open && setActiveProfileAgent(null)}>
-        <DialogContent className="sm:max-w-[500px] overflow-hidden p-0 bg-card border-border shadow-2xl">
+        <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-hidden p-0 bg-card border-border shadow-2xl flex flex-col">
           {activeProfileAgent && (
             <>
               {/* Profile Card Header Segment banner */}
-              <div className="bg-muted/50 p-6 border-b border-border flex items-center gap-4">
+              <div className="bg-muted/50 p-6 border-b border-border flex items-center gap-4 shrink-0">
                 <div className="w-14 h-14 rounded-full bg-[#f5a524] text-slate-900 flex items-center justify-center font-bold text-xl shadow-inner">
                   {activeProfileAgent.name.split(' ').map(n => n[0]).join('')}
                 </div>
@@ -592,7 +695,7 @@ export default function HRDashboard() {
               </div>
 
               {/* Restored Detailed Grid Layout */}
-              <div className="p-6 space-y-5 text-sm">
+              <div className="p-6 space-y-5 text-sm flex-1 min-h-0 overflow-y-auto">
                 <h4 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/60 pb-1.5">
                   Corporate Employee Credentials
                 </h4>
@@ -656,7 +759,7 @@ export default function HRDashboard() {
                 </div>
               </div>
 
-              <DialogFooter className="p-4 border-t border-border bg-muted/20">
+              <DialogFooter className="p-4 border-t border-border bg-muted/20 shrink-0">
                 <Button 
                   type="button" 
                   className="w-full bg-[#f5a524] text-slate-900 hover:bg-[#e0941d] font-bold" 

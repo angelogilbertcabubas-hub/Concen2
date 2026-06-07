@@ -44,7 +44,11 @@ import {
   Archive,
   Mail,
   CheckCircle,
-  Info
+  Info,
+  Home,
+  DollarSign,
+  Receipt,
+  Gift
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -226,7 +230,7 @@ export default function GlobalHeader() {
                   <Menu className="w-5 h-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-64 p-0">
+              <SheetContent side="left" className="w-64 p-0 bg-card dark:bg-[#1B3045] border-r border-border dark:border-[#2a3f5a]">
                 <MobileNav />
               </SheetContent>
             </Sheet>
@@ -236,7 +240,7 @@ export default function GlobalHeader() {
               className="flex items-center gap-3 hover:opacity-90 transition-opacity text-left"
             >
               <CompanyLogo className="w-10 h-10 border border-border/40 bg-white shadow-sm" />
-              <span className="hidden sm:inline font-bold text-lg text-foreground tracking-tight">
+              <span className="hidden sm:inline font-bold text-lg text-[#1B3045] dark:text-foreground tracking-tight">
                 ConcenTwo
               </span>
             </button>
@@ -339,7 +343,6 @@ export default function GlobalHeader() {
               </AnimatePresence>
             </div>
 
-            {/* NEW: Dedicated Attendance Button */}
             <Button 
               variant="ghost" 
               size="icon" 
@@ -375,7 +378,6 @@ export default function GlobalHeader() {
                 <DropdownMenuItem onClick={() => navigate('/profile')}>
                   <User className="w-4 h-4 mr-2" /> View Profile
                 </DropdownMenuItem>
-                {/* My Attendance removed from here */}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setShowLogoutConfirm(true)} className="text-destructive focus:text-destructive">
                   <LogOut className="w-4 h-4 mr-2" /> Logout
@@ -576,39 +578,51 @@ function MobileNav() {
   const location = useLocation();
 
   const navItems = [
-    { label: 'Dashboard', path: '/dashboard' },
-    { label: 'Leave Request', path: '/leave-request' },
-    { label: 'Payroll', path: '/payroll' },
-    { label: 'Reimbursement', path: '/reimbursement' },
-    { label: 'Benefits', path: '/benefits' },
-    { label: 'Profile', path: '/profile' },
+    { icon: Home, label: 'Dashboard', path: '/dashboard' },
+    { icon: FileText, label: 'Leave Request', path: '/leave-request' },
+    { icon: DollarSign, label: 'Payroll', path: '/payroll' },
+    { icon: Receipt, label: 'Reimbursement', path: '/reimbursement' },
+    { icon: Gift, label: 'Benefits', path: '/benefits' },
+    { icon: User, label: 'Profile', path: '/profile' },
   ];
 
   return (
-    <div className="flex flex-col h-full pt-10 px-4">
+    <div className="flex flex-col h-full pt-10 px-4 bg-card dark:bg-[#1B3045]">
       {/* Mobile Sidebar Branding Header */}
       <div className="flex items-center gap-3 mb-6 px-2">
         <CompanyLogo className="w-8 h-8 border border-border/40 bg-white shadow-sm" />
-        <span className="font-bold text-lg text-foreground tracking-tight">
+        <span className="font-bold text-lg text-[#1B3045] dark:text-white tracking-tight">
           ConcenTwo
         </span>
       </div>
 
       {/* Navigation List */}
-      <nav className="space-y-1">
-        {navItems.map((item) => (
-          <button
-            key={item.path}
-            onClick={() => navigate(item.path)}
-            className={`w-full text-left px-4 py-3 rounded-lg transition-colors font-medium ${
-              location.pathname === item.path
-                ? 'bg-primary text-primary-foreground'
-                : 'hover:bg-muted text-foreground/80'
-            }`}
-          >
-            {item.label}
-          </button>
-        ))}
+      <nav className="space-y-2">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = location.pathname === item.path;
+
+          return (
+            <button
+              key={item.path}
+              onClick={() => navigate(item.path)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group ${
+                isActive
+                  ? 'bg-[#fac06d] text-[#1B3045] shadow-md font-bold'
+                  : 'text-[#1B3045] dark:text-slate-300 hover:bg-muted dark:hover:bg-white/10 hover:text-[#1B3045] dark:hover:text-white hover:translate-x-1.5'
+              }`}
+            >
+              <Icon 
+                className={`w-5 h-5 shrink-0 transition-all duration-300 ${
+                  isActive 
+                    ? 'scale-110' 
+                    : 'group-hover:scale-110 group-hover:text-[#fac06d]'
+                }`} 
+              />
+              <span className="font-medium truncate">{item.label}</span>
+            </button>
+          );
+        })}
       </nav>
     </div>
   );
